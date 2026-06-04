@@ -1,0 +1,17 @@
+{
+  "name": "mi-token",
+  "version": "1.0.0",
+  "description": "Proyecto ERC-20 DinoCoin",
+  "main": "scripts/deploy.js",
+  "scripts": {
+    "compile": "forge build",
+    "test": "forge test",
+    "coverage": "forge coverage --report summary --match-contract DinoCoin"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "ethers": "^6.11.1"
+  }
+}
