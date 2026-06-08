@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ERC-20 Admin — Sepolia</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --border: #2a2a2a;
+      --accent: #e8ff00;
+      --accent-dim: rgba(232,255,0,0.12);
+      --text: #e8e8e8;
+      --muted: #666;
+      --danger: #ff4444;
+      --danger-dim: rgba(255,68,68,0.1);
+      --success: #00e676;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chain-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    #btn-connect {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 7px 18px;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #btn-connect:hover { background: var(--accent-dim); }
+    #btn-connect.connected { color: var(--success); border-color: var(--success); }
+
+    #btn-disconnect {
+      display: none;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 7px 14px;
+      border: 1px solid #3a3a3a;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #btn-disconnect:hover { border-color: var(--danger); color: var(--danger); }
+
+    #wallet-addr {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    main {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 40px 32px 80px;
+    }
+
+    .contract-info {
+      border: 1px solid var(--border);
+      padding: 14px 20px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .contract-info .ci-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .contract-info .ci-addr {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+    }
+    .contract-info a {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(232,255,0,0.3);
+      white-space: nowrap;
+    }
+    .contract-info a:hover { border-bottom-color: var(--accent); }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: #444; }
+
+    .section {
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--surface);
+      transition: background 0.15s;
+    }
+    .section-header:hover { background: #1a1a1a; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 1px;
+    }
+    .tag-write  { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,255,0,0.3); }
+    .tag-admin  { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,68,68,0.3); }
+    .tag-info   { background: rgba(0,230,118,0.1); color: var(--success); border: 1px solid rgba(0,230,118,0.25); }
+
+    .section-name {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .chevron {
+      font-size: 10px;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .section.open .chevron { transform: rotate(180deg); }
+
+    .section-body {
+      display: none;
+      padding: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .section.open .section-body { display: block; }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .hint { font-size: 11px; color: #555; margin-top: 4px; }
+
+    .field-row { display: flex; gap: 8px; }
+    .field-row input { flex: 1; }
+
+    .btn {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 9px 20px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      text-transform: uppercase;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-danger  { background: var(--danger); color: #fff; }
+    .btn-neutral { background: #252525; color: var(--text); border: 1px solid var(--border); }
+    .btn-sm      { padding: 6px 14px; font-size: 11px; }
+    .btn-full    { width: 100%; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .info-cell {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+    }
+    .info-cell .cell-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .info-cell .cell-value {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    #status-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 10px 32px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 20;
+    }
+    #status-bar .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    #status-bar.ok      .dot { background: var(--success); }
+    #status-bar.err     .dot { background: var(--danger); }
+    #status-bar.pending .dot { background: var(--accent); animation: pulse 0.9s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    #status-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .tx-link {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(232,255,0,0.3);
+      white-space: nowrap;
+    }
+    .tx-link:hover { border-bottom-color: var(--accent); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ERC-20 // Admin Panel</div>
+  <div class="header-right">
+    <span class="chain-badge">SEPOLIA TESTNET</span>
+    <span id="wallet-addr"></span>
+    <button id="btn-connect" onclick="connectWallet()">Conectar MetaMask</button>
+    <button id="btn-disconnect" onclick="disconnectWallet()">Desconectar</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Contract address display -->
+  <div class="contract-info">
+    <div>
+      <div class="ci-label">Contrato</div>
+      <div class="ci-addr">0x6bb61eEde1fA66a306257b4577B85912ad5e01cc</div>
+    </div>
+    <a href="https://sepolia.etherscan.io/address/0x6bb61eEde1fA66a306257b4577B85912ad5e01cc" target="_blank">Ver en Etherscan ↗</a>
+  </div>
+
+  <!-- Token info -->
+  <div class="section" id="sec-info">
+    <div class="section-header" onclick="toggle('sec-info')">
+      <div class="section-title">
+        <span class="section-tag tag-info">READ</span>
+        <span class="section-name">Información del Token</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="info-grid">
+        <div class="info-cell">
+          <div class="cell-label">Nombre</div>
+          <div class="cell-value" id="info-name">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="cell-label">Símbolo</div>
+          <div class="cell-value" id="info-symbol">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="cell-label">Decimales</div>
+          <div class="cell-value" id="info-decimals">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="cell-label">Supply Total</div>
+          <div class="cell-value" id="info-supply">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="cell-label">Supply Máximo</div>
+          <div class="cell-value" id="info-maxsupply">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="cell-label">Pausado</div>
+          <div class="cell-value" id="info-paused">—</div>
+        </div>
+        <div class="info-cell" style="grid-column: span 3;">
+          <div class="cell-label">Owner</div>
+          <div class="cell-value" id="info-owner" style="font-size:12px; word-break:break-all;">—</div>
+        </div>
+      </div>
+      <br/>
+      <div class="field">
+        <label>Consultar Balance</label>
+        <div class="field-row">
+          <input type="text" id="balance-addr" placeholder="0x..."/>
+          <button class="btn btn-neutral btn-sm" onclick="getBalance()">Consultar</button>
+        </div>
+        <div class="hint" id="balance-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mint -->
+  <div class="section" id="sec-mint">
+    <div class="section-header" onclick="toggle('sec-mint')">
+      <div class="section-title">
+        <span class="section-tag tag-write">WRITE</span>
+        <span class="section-name">Mint</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Dirección destinataria</label>
+        <input type="text" id="mint-to" placeholder="0x..."/>
+      </div>
+      <div class="field">
+        <label>Cantidad de tokens</label>
+        <input type="number" id="mint-amount" placeholder="100" min="0" step="any"/>
+        <div class="hint">Los decimales del contrato se aplican automáticamente.</div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doMint()">Mint →</button>
+    </div>
+  </div>
+
+  <!-- Transfer -->
+  <div class="section" id="sec-transfer">
+    <div class="section-header" onclick="toggle('sec-transfer')">
+      <div class="section-title">
+        <span class="section-tag tag-write">WRITE</span>
+        <span class="section-name">Transfer</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Dirección destino</label>
+        <input type="text" id="transfer-to" placeholder="0x..."/>
+      </div>
+      <div class="field">
+        <label>Cantidad</label>
+        <input type="number" id="transfer-amount" placeholder="10" min="0" step="any"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doTransfer()">Transferir →</button>
+    </div>
+  </div>
+
+  <!-- Burn -->
+  <div class="section" id="sec-burn">
+    <div class="section-header" onclick="toggle('sec-burn')">
+      <div class="section-title">
+        <span class="section-tag tag-admin">ADMIN</span>
+        <span class="section-name">Burn</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Cantidad a quemar</label>
+        <input type="number" id="burn-amount" placeholder="50" min="0" step="any"/>
+        <div class="hint">Se quemarán desde la wallet conectada.</div>
+      </div>
+      <button class="btn btn-danger btn-full" onclick="doBurn()">Burn →</button>
+    </div>
+  </div>
+
+  <!-- Pause / Unpause -->
+  <div class="section" id="sec-pause">
+    <div class="section-header" onclick="toggle('sec-pause')">
+      <div class="section-title">
+        <span class="section-tag tag-admin">ADMIN</span>
+        <span class="section-name">Pause / Unpause</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-danger" style="flex:1" onclick="doPause()">Pausar Contrato</button>
+        <button class="btn btn-neutral" style="flex:1" onclick="doUnpause()">Reanudar Contrato</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blacklist -->
+  <div class="section" id="sec-blacklist">
+    <div class="section-header" onclick="toggle('sec-blacklist')">
+      <div class="section-title">
+        <span class="section-tag tag-admin">ADMIN</span>
+        <span class="section-name">Blacklist</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Dirección</label>
+        <input type="text" id="blacklist-addr" placeholder="0x..."/>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:4px;">
+        <button class="btn btn-danger" style="flex:1" onclick="doBlacklist(true)">Agregar a Blacklist</button>
+        <button class="btn btn-neutral" style="flex:1" onclick="doBlacklist(false)">Quitar de Blacklist</button>
+      </div>
+      <br/>
+      <div class="field">
+        <label>Consultar estado de una dirección</label>
+        <div class="field-row">
+          <input type="text" id="blacklist-check-addr" placeholder="0x..."/>
+          <button class="btn btn-neutral btn-sm" onclick="checkBlacklist()">Consultar</button>
+        </div>
+        <div class="hint" id="blacklist-result"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="status-bar">
+  <div class="dot"></div>
+  <span id="status-text">Sin conexión. Conecta MetaMask para comenzar.</span>
+  <span id="tx-link-container"></span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+
+<script>
+  // ── Contrato ───────────────────────────────────────────────────────────────
+  const CONTRACT_ADDRESS = "0x6bb61eEde1fA66a306257b4577B85912ad5e01cc";
+  const SEPOLIA_CHAIN_ID = "0xaa36a7";
+
+  const ABI = [{"type":"constructor","inputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"MAX_SUPPLY","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"allowance","inputs":[{"name":"owner","type":"address","internalType":"address"},{"name":"spender","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"approve","inputs":[{"name":"spender","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"},{"type":"function","name":"balanceOf","inputs":[{"name":"account","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"blacklist","inputs":[{"name":"_addr","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"blacklistRemove","inputs":[{"name":"_addr","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"blacklisted","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"type":"function","name":"burn","inputs":[{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"burnFrom","inputs":[{"name":"account","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"decimals","inputs":[],"outputs":[{"name":"","type":"uint8","internalType":"uint8"}],"stateMutability":"view"},{"type":"function","name":"mint","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"name","inputs":[],"outputs":[{"name":"","type":"string","internalType":"string"}],"stateMutability":"view"},{"type":"function","name":"owner","inputs":[],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},{"type":"function","name":"pause","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"paused","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"type":"function","name":"renounceOwnership","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"symbol","inputs":[],"outputs":[{"name":"","type":"string","internalType":"string"}],"stateMutability":"view"},{"type":"function","name":"totalSupply","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"},{"type":"function","name":"transferFrom","inputs":[{"name":"from","type":"address","internalType":"address"},{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"},{"type":"function","name":"transferOwnership","inputs":[{"name":"newOwner","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"unpause","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"event","name":"AddressBlacklisted","inputs":[{"name":"account","type":"address","indexed":true,"internalType":"address"},{"name":"isBlacklisted","type":"bool","indexed":false,"internalType":"bool"}],"anonymous":false},{"type":"event","name":"Approval","inputs":[{"name":"owner","type":"address","indexed":true,"internalType":"address"},{"name":"spender","type":"address","indexed":true,"internalType":"address"},{"name":"value","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"OwnershipTransferred","inputs":[{"name":"previousOwner","type":"address","indexed":true,"internalType":"address"},{"name":"newOwner","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"type":"event","name":"Paused","inputs":[{"name":"account","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"Transfer","inputs":[{"name":"from","type":"address","indexed":true,"internalType":"address"},{"name":"to","type":"address","indexed":true,"internalType":"address"},{"name":"value","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"Unpaused","inputs":[{"name":"account","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"error","name":"ERC20InsufficientAllowance","inputs":[{"name":"spender","type":"address","internalType":"address"},{"name":"allowance","type":"uint256","internalType":"uint256"},{"name":"needed","type":"uint256","internalType":"uint256"}]},{"type":"error","name":"ERC20InsufficientBalance","inputs":[{"name":"sender","type":"address","internalType":"address"},{"name":"balance","type":"uint256","internalType":"uint256"},{"name":"needed","type":"uint256","internalType":"uint256"}]},{"type":"error","name":"ERC20InvalidApprover","inputs":[{"name":"approver","type":"address","internalType":"address"}]},{"type":"error","name":"ERC20InvalidReceiver","inputs":[{"name":"receiver","type":"address","internalType":"address"}]},{"type":"error","name":"ERC20InvalidSender","inputs":[{"name":"sender","type":"address","internalType":"address"}]},{"type":"error","name":"ERC20InvalidSpender","inputs":[{"name":"spender","type":"address","internalType":"address"}]},{"type":"error","name":"EnforcedPause","inputs":[]},{"type":"error","name":"ExpectedPause","inputs":[]},{"type":"error","name":"OwnableInvalidOwner","inputs":[{"name":"owner","type":"address","internalType":"address"}]},{"type":"error","name":"OwnableUnauthorizedAccount","inputs":[{"name":"account","type":"address","internalType":"address"}]}];
+
+  let provider, signer, contract;
+  let tokenDecimals = 18;
+
+  // ── Utilidades ─────────────────────────────────────────────────────────────
+  function setStatus(msg, type = "") {
+    const bar = document.getElementById("status-bar");
+    bar.className = type;
+    document.getElementById("status-text").textContent = msg;
+    document.getElementById("tx-link-container").innerHTML = "";
+  }
+
+  function setTxStatus(hash) {
+    setStatus("Transacción enviada: " + hash.slice(0,18) + "…", "pending");
+    const container = document.getElementById("tx-link-container");
+    const link = document.createElement("a");
+    link.href = "https://sepolia.etherscan.io/tx/" + hash;
+    link.target = "_blank";
+    link.className = "tx-link";
+    link.textContent = "ver en Etherscan ↗";
+    container.appendChild(link);
+  }
+
+  function toggle(id) {
+    document.getElementById(id).classList.toggle("open");
+  }
+
+  function shortAddr(addr) {
+    return addr.slice(0, 6) + "..." + addr.slice(-4);
+  }
+
+  function toUnits(amount) {
+    return ethers.utils.parseUnits(String(amount), tokenDecimals);
+  }
+
+  function fromUnits(amount) {
+    return ethers.utils.formatUnits(amount, tokenDecimals);
+  }
+
+  // ── Custom error decoder ────────────────────────────────────────────────────
+  const ERROR_NAMES = {
+    "EnforcedPause":              "El contrato está pausado.",
+    "ExpectedPause":              "El contrato no está pausado.",
+    "OwnableUnauthorizedAccount": "No eres el owner del contrato.",
+    "ERC20InsufficientBalance":   "Balance insuficiente.",
+    "ERC20InsufficientAllowance": "Allowance insuficiente.",
+  };
+
+  function friendlyError(e) {
+    // Try to match known custom error names
+    for (const [name, msg] of Object.entries(ERROR_NAMES)) {
+      if (e.message && e.message.includes(name)) return msg;
+      if (e.reason  && e.reason.includes(name))  return msg;
+    }
+    return e.reason || e.message || String(e);
+  }
+
+  // ── Wallet state helpers ───────────────────────────────────────────────────
+  function setConnectedUI(addr) {
+    document.getElementById("wallet-addr").textContent = shortAddr(addr);
+    const btnC = document.getElementById("btn-connect");
+    btnC.textContent = "Conectado";
+    btnC.classList.add("connected");
+    document.getElementById("btn-disconnect").style.display = "inline-block";
+  }
+
+  function setDisconnectedUI() {
+    document.getElementById("wallet-addr").textContent = "";
+    const btnC = document.getElementById("btn-connect");
+    btnC.textContent = "Conectar MetaMask";
+    btnC.classList.remove("connected");
+    document.getElementById("btn-disconnect").style.display = "none";
+    ["info-name","info-symbol","info-decimals","info-supply","info-maxsupply","info-paused","info-owner"]
+      .forEach(id => document.getElementById(id).textContent = "—");
+    document.getElementById("balance-result").textContent = "";
+  }
+
+  // ── Wallet ─────────────────────────────────────────────────────────────────
+  async function connectWallet() {
+    if (!window.ethereum) {
+      setStatus("MetaMask no detectado. Instálalo primero.", "err");
+      return;
+    }
+    try {
+      setStatus("Conectando MetaMask…", "pending");
+
+      // Siempre muestra el selector de cuenta
+      await window.ethereum.request({
+        method: "wallet_requestPermissions",
+        params: [{ eth_accounts: {} }],
+      });
+
+      // Cambiar a Sepolia
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: SEPOLIA_CHAIN_ID }],
+        });
+      } catch (se) {
+        if (se.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: SEPOLIA_CHAIN_ID,
+              chainName: "Sepolia Test Network",
+              rpcUrls: ["https://rpc.sepolia.org"],
+              nativeCurrency: { name: "SepoliaETH", symbol: "SEP", decimals: 18 },
+              blockExplorerUrls: ["https://sepolia.etherscan.io"],
+            }],
+          });
+        }
+      }
+
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      signer = provider.getSigner();
+      const addr = await signer.getAddress();
+
+      setConnectedUI(addr);
+      setStatus("Wallet conectada: " + addr, "ok");
+      initContract();
+
+    } catch (e) {
+      if (e.code === 4001) {
+        setStatus("Conexión cancelada por el usuario.", "err");
+      } else {
+        setStatus("Error al conectar: " + e.message, "err");
+      }
+    }
+  }
+
+  function disconnectWallet() {
+    provider = null;
+    signer = null;
+    contract = null;
+    tokenDecimals = 18;
+    setDisconnectedUI();
+    setStatus("Wallet desconectada.", "");
+  }
+
+  // ── Contract ───────────────────────────────────────────────────────────────
+  function initContract() {
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    document.getElementById("sec-info").classList.add("open");
+    refreshInfo();
+  }
+
+  async function refreshInfo() {
+    if (!contract) return;
+    try {
+      const [name, symbol, dec, supply, maxSupply, paused, owner] = await Promise.all([
+        contract.name(),
+        contract.symbol(),
+        contract.decimals(),
+        contract.totalSupply(),
+        contract.MAX_SUPPLY(),
+        contract.paused(),
+        contract.owner(),
+      ]);
+      tokenDecimals = dec;
+      document.getElementById("info-name").textContent      = name;
+      document.getElementById("info-symbol").textContent    = symbol;
+      document.getElementById("info-decimals").textContent  = dec;
+      document.getElementById("info-supply").textContent    = fromUnits(supply);
+      document.getElementById("info-maxsupply").textContent = fromUnits(maxSupply);
+      document.getElementById("info-paused").textContent    = paused ? "SÍ" : "NO";
+      document.getElementById("info-owner").textContent     = owner;
+    } catch(e) {
+      setStatus("Error leyendo info: " + friendlyError(e), "err");
+    }
+  }
+
+  async function getBalance() {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    const addr = document.getElementById("balance-addr").value.trim();
+    if (!addr) { setStatus("Ingresa una dirección.", "err"); return; }
+    try {
+      const bal = await contract.balanceOf(addr);
+      const sym = document.getElementById("info-symbol").textContent;
+      document.getElementById("balance-result").textContent =
+        "Balance: " + fromUnits(bal) + " " + sym;
+    } catch(e) {
+      setStatus("Error consultando balance: " + friendlyError(e), "err");
+    }
+  }
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+  async function doMint() {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    const to     = document.getElementById("mint-to").value.trim();
+    const amount = document.getElementById("mint-amount").value;
+    if (!to || !amount) { setStatus("Completa todos los campos.", "err"); return; }
+    try {
+      setStatus("Enviando mint…", "pending");
+      const tx = await contract.mint(to, toUnits(amount));
+      setTxStatus(tx.hash);
+      await tx.wait();
+      setStatus("Mint completado ✓", "ok");
+      refreshInfo();
+    } catch(e) {
+      setStatus("Error mint: " + friendlyError(e), "err");
+    }
+  }
+
+  async function doTransfer() {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    const to     = document.getElementById("transfer-to").value.trim();
+    const amount = document.getElementById("transfer-amount").value;
+    if (!to || !amount) { setStatus("Completa todos los campos.", "err"); return; }
+    try {
+      setStatus("Enviando transferencia…", "pending");
+      const tx = await contract.transfer(to, toUnits(amount));
+      setTxStatus(tx.hash);
+      await tx.wait();
+      setStatus("Transferencia completada ✓", "ok");
+      refreshInfo();
+    } catch(e) {
+      setStatus("Error transfer: " + friendlyError(e), "err");
+    }
+  }
+
+  async function doBurn() {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    const amount = document.getElementById("burn-amount").value;
+    if (!amount) { setStatus("Ingresa la cantidad a quemar.", "err"); return; }
+    try {
+      setStatus("Enviando burn…", "pending");
+      const tx = await contract.burn(toUnits(amount));
+      setTxStatus(tx.hash);
+      await tx.wait();
+      setStatus("Burn completado ✓", "ok");
+      refreshInfo();
+    } catch(e) {
+      setStatus("Error burn: " + friendlyError(e), "err");
+    }
+  }
+
+  async function doPause() {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    try {
+      setStatus("Pausando contrato…", "pending");
+      const tx = await contract.pause();
+      setTxStatus(tx.hash);
+      await tx.wait();
+      setStatus("Contrato pausado ✓", "ok");
+      refreshInfo();
+    } catch(e) {
+      setStatus("Error pause: " + friendlyError(e), "err");
+    }
+  }
+
+  async function doUnpause() {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    try {
+      setStatus("Reanudando contrato…", "pending");
+      const tx = await contract.unpause();
+      setTxStatus(tx.hash);
+      await tx.wait();
+      setStatus("Contrato reanudado ✓", "ok");
+      refreshInfo();
+    } catch(e) {
+      setStatus("Error unpause: " + friendlyError(e), "err");
+    }
+  }
+
+  async function doBlacklist(add) {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    const addr = document.getElementById("blacklist-addr").value.trim();
+    if (!addr) { setStatus("Ingresa una dirección.", "err"); return; }
+    try {
+      setStatus((add ? "Agregando" : "Quitando") + " dirección de blacklist…", "pending");
+      // Funciones exactas del contrato: blacklist() y blacklistRemove()
+      const tx = add
+        ? await contract.blacklist(addr)
+        : await contract.blacklistRemove(addr);
+      setTxStatus(tx.hash);
+      await tx.wait();
+      setStatus("Blacklist actualizada ✓", "ok");
+    } catch(e) {
+      setStatus("Error blacklist: " + friendlyError(e), "err");
+    }
+  }
+
+  async function checkBlacklist() {
+    if (!contract) { setStatus("Conecta MetaMask primero.", "err"); return; }
+    const addr = document.getElementById("blacklist-check-addr").value.trim();
+    if (!addr) { setStatus("Ingresa una dirección.", "err"); return; }
+    try {
+      // Función exacta del contrato: blacklisted(address)
+      const result = await contract.blacklisted(addr);
+      document.getElementById("blacklist-result").textContent =
+        "Estado: " + (result ? "EN BLACKLIST ✗" : "No está en blacklist ✓");
+    } catch(e) {
+      setStatus("Error consultando blacklist: " + friendlyError(e), "err");
+    }
+  }
+
+  // ── Listeners ──────────────────────────────────────────────────────────────
+  if (window.ethereum) {
+    window.ethereum.on("accountsChanged", () => location.reload());
+    window.ethereum.on("chainChanged",    () => location.reload());
+  }
+</script>
+</body>
+</html>
